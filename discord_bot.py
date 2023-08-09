@@ -2,11 +2,11 @@ import os
 
 import discord
 from discord.ext import commands
-from secrets import secret
+from settings import get_secret
 
-BOT_TOKEN = secret("BOT_TOKEN")
-APPLICATION_ID = secret("APPLICATION_ID")
-GUILD_ID = secret("GUILD_ID")
+BOT_TOKEN = get_secret("BOT_TOKEN")
+APPLICATION_ID = get_secret("APPLICATION_ID")
+GUILD_ID = get_secret("GUILD_ID")
 
 
 class CatastrophiaBot(commands.Bot):

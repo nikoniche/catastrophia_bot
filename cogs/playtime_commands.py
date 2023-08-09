@@ -1,23 +1,26 @@
 import json
 import discord
 import requests
+import time
 from requests import get
 from discord import app_commands, HTTPException
 from discord.ext import commands
-from secrets import secret
+from settings import get_secret, get_config
 from format_functions import embed_message, format_playtime
 
-GUILD_ID = secret("GUILD_ID")
-PING_ACCOUNT_ID = secret("PING_ACCOUNT_ID")
-GENERAL_CHANNEL_ID = secret("GENERAL_CHANNEL_ID")
-ERROR_CHANNEL_ID = secret("ERROR_CHANNEL_ID")
-CATASTROPHIA_API_URL = secret("CATASTROPHIA_API_URL")
+GUILD_ID = get_secret("GUILD_ID")
+PING_ACCOUNT_ID = get_secret("PING_ACCOUNT_ID")
+GENERAL_CHANNEL_ID = get_secret("GENERAL_CHANNEL_ID")
+ERROR_CHANNEL_ID = get_secret("ERROR_CHANNEL_ID")
+CATASTROPHIA_API_URL = get_secret("CATASTROPHIA_API_URL")
 
 REQUEST_ENDPOINT = "/request"
 TOP_TIMES_ENDPOINT = "/top_times"
 
-with open("./confidential_usernames.json", "r") as read:
-    CONFIDENTIAL_USERNAMES = json.load(read)
+MIN_TOP_PLAYERS = get_config("MIN_TOP_PLAYERS")
+MAX_TOP_PLAYERS = get_config("MAX_TOP_PLAYERS")
+
+CONFIDENTIAL_USERNAMES = get_config("CONFIDENTIAL_USERNAMES")
 
 
 class PlaytimeCommands(commands.Cog):
@@ -53,7 +56,7 @@ class PlaytimeCommands(commands.Cog):
         response = get(
             requested_url,
             params={
-                "name": username.lower()
+                "username": username
             })
 
         try:
@@ -69,17 +72,16 @@ class PlaytimeCommands(commands.Cog):
             filtered_exception = "\n".join([arg.replace(CATASTROPHIA_API_URL, "") for arg in exception.args])
             await error_channel.send("<@" + str(PING_ACCOUNT_ID) + ">" + "\n" +
                                      embed_message(
-                                         f"CatastrophiaBot raised exception while showing a single playtime: {filtered_exception}"
+                                         f"CatastrophiaBot raised an exception while showing a single playtime: {filtered_exception}"
                                      ))
             return
         else:
             playtime = response.json()
 
         if playtime < 60:
-            message = "Your playtime is less than 1 hour."
+            message = f"{username} has played less than 1 hour."
         else:
-            formatted_playtime = f"{playtime // 60} hours and {playtime % 60} minutes"
-            message = f"{username} has played {formatted_playtime}."
+            message = f"{username} has played {format_playtime(playtime)}."
 
         response_message = embed_message(message)
 
@@ -100,8 +102,17 @@ class PlaytimeCommands(commands.Cog):
             print("Attempted to use CatastrophiaBot in general.")
             return
 
+        # setting the limit for the amount argument
+        if amount < MIN_TOP_PLAYERS or amount > MAX_TOP_PLAYERS:
+            await interaction.response.send_message(embed_message(
+                f"The limit for the amount is between {MIN_TOP_PLAYERS} and {MAX_TOP_PLAYERS}."
+            ))
+            return
+
         requested_url = f"{CATASTROPHIA_API_URL}/{TOP_TIMES_ENDPOINT}"
-        response = requests.get(requested_url)
+        response = requests.get(requested_url, params={
+            "amount": amount
+        })
         print(f"Showing the playtime of the top {amount} players.")
 
         # avoiding HTTP request exceptions
@@ -118,7 +129,7 @@ class PlaytimeCommands(commands.Cog):
             filtered_exception = "\n".join([arg.replace(CATASTROPHIA_API_URL, "") for arg in exception.args])
             await error_channel.send("<@" + str(PING_ACCOUNT_ID) + ">" + "\n" +
                                      embed_message(
-                                         f"CatastrophiaBot raised exception while showing top times: {filtered_exception}"
+                                         f"CatastrophiaBot raised an exception while showing top times: {filtered_exception}"
                                      ))
             return
         else:
@@ -126,14 +137,29 @@ class PlaytimeCommands(commands.Cog):
 
         # formatting the dictionary with the top times into a string message
         message = ""
-        for position, pair in enumerate(top_times_dict.items()):
+        for i, pair in enumerate(top_times_dict.items()):
+            position = i + 1
+
             username, playtime = pair
-            message += f"{position+1}. {username}: {format_playtime(playtime)}\n"
+            message += f"{position}: {username} - {format_playtime(playtime)}\n"
 
-        # removing last line break
-        message = message[:-1]
+            # dividing message to 10 sections
+            if position % 10 == 0 or position == len(top_times_dict):
+                # removing last line break
+                message = message[:-1]
 
-        await interaction.response.send_message(embed_message(message))
+                # sending a section of the playtimes
+                response_channel = interaction.channel
+                try:
+                    await response_channel.send(embed_message(message))
+                except HTTPException:
+                    print("Got rate limited.")
+
+                # reset for the next section
+                message = ""
+
+                # cooldown to avoid rate limits
+                time.sleep(2)
 
 
 async def setup(bot: commands.Bot) -> None:

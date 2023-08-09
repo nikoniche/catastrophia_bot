@@ -1,9 +1,9 @@
 import discord
 from discord import app_commands
 from discord.ext import commands
-from secrets import secret
+from settings import get_secret
 
-GUILD_ID = secret("GUILD_ID")
+GUILD_ID = get_secret("GUILD_ID")
 
 
 class test(commands.Cog):
