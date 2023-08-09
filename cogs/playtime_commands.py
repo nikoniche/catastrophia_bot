@@ -4,7 +4,7 @@ from requests import get
 from discord import app_commands, HTTPException
 from discord.ext import commands
 from secrets import secret
-from format_functions import embed_message
+from format_functions import embed_message, format_playtime
 
 GUILD_ID = secret("GUILD_ID")
 PING_ACCOUNT_ID = secret("PING_ACCOUNT_ID")
@@ -13,6 +13,7 @@ ERROR_CHANNEL_ID = secret("ERROR_CHANNEL_ID")
 CATASTROPHIA_API_URL = secret("CATASTROPHIA_API_URL")
 
 REQUEST_ENDPOINT = "/request"
+TOP_TIMES_ENDPOINT = "/top_times"
 
 with open("./confidential_usernames.json", "r") as read:
     CONFIDENTIAL_USERNAMES = json.load(read)
@@ -67,11 +68,11 @@ class PlaytimeCommands(commands.Cog):
             filtered_exception = "\n".join([arg.replace(CATASTROPHIA_API_URL, "") for arg in exception.args])
             await error_channel.send("<@" + str(PING_ACCOUNT_ID) + ">" + "\n" +
                                      embed_message(
-                                         f"CatastrophiaBot raised exception: {filtered_exception}"
+                                         f"CatastrophiaBot raised exception while showing a single playtime: {filtered_exception}"
                                      ))
             return
         else:
-            result = response.text
+            result = response.json()
 
         if result is None:
             print(f"Found no recorded playtime for user {username}")
@@ -91,6 +92,53 @@ class PlaytimeCommands(commands.Cog):
             await interaction.response.send_message(content)
         except HTTPException:
             print("Getting rate limited")
+
+    @app_commands.command(
+        name="top_times",
+        description="Shows the players with the highest playtimes."
+    )
+    async def show_top_players(self,
+                               interaction: discord.Interaction,
+                               amount: int):
+        # blocks sending messages in the general channel
+        if interaction.channel_id == GENERAL_CHANNEL_ID:
+            print("Attempted to use CatastrophiaBot in general.")
+            return
+
+        requested_url = f"{CATASTROPHIA_API_URL}/{TOP_TIMES_ENDPOINT}"
+        response = requests.get(requested_url)
+        print(f"Showing the playtime of the top {amount} players.")
+
+        # avoiding HTTP request exceptions
+        try:
+            response.raise_for_status()
+        except Exception as exception:
+            # catches exceptions when attempting to contact API server
+            print(exception)
+
+            # displays the error message in a channel and pings myself
+            error_channel = self.bot.get_channel(ERROR_CHANNEL_ID)
+
+            # formatting the exception to avoid leaking the API URL
+            filtered_exception = "\n".join([arg.replace(CATASTROPHIA_API_URL, "") for arg in exception.args])
+            await error_channel.send("<@" + str(PING_ACCOUNT_ID) + ">" + "\n" +
+                                     embed_message(
+                                         f"CatastrophiaBot raised exception while showing top times: {filtered_exception}"
+                                     ))
+            return
+        else:
+            top_times_dict = response.json()
+
+        # formatting the dictionary with the top times into a string message
+        message = ""
+        for position, pair in enumerate(top_times_dict.items()):
+            username, playtime = pair
+            message += f"{position+1}. {username}: {format_playtime(playtime)}\n"
+
+        # removing last line break
+        message = message[:-1]
+
+        await interaction.response.send_message(embed_message(message))
 
 
 async def setup(bot: commands.Bot) -> None:
