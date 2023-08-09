@@ -1,5 +1,6 @@
 import json
 import discord
+import requests
 from requests import get
 from discord import app_commands, HTTPException
 from discord.ext import commands
@@ -72,24 +73,18 @@ class PlaytimeCommands(commands.Cog):
                                      ))
             return
         else:
-            result = response.json()
+            playtime = response.json()
 
-        if result is None:
-            print(f"Found no recorded playtime for user {username}")
-            return
-
-        try:
-            playtime = int(result)
-        except ValueError:
+        if playtime < 60:
             message = "Your playtime is less than 1 hour."
         else:
             formatted_playtime = f"{playtime // 60} hours and {playtime % 60} minutes"
             message = f"{username} has played {formatted_playtime}."
-        finally:
-            content = embed_message(message)
+
+        response_message = embed_message(message)
 
         try:
-            await interaction.response.send_message(content)
+            await interaction.response.send_message(response_message)
         except HTTPException:
             print("Getting rate limited")
 
