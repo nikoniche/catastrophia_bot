@@ -1,5 +1,4 @@
 import os
-
 import discord
 from discord.ext import commands
 from settings import get_secret
@@ -17,6 +16,7 @@ class CatastrophiaBot(commands.Bot):
             intents=discord.Intents.all(),
             application_id=APPLICATION_ID
         )
+
         self.run(BOT_TOKEN)
 
     async def setup_hook(self):
@@ -29,6 +29,7 @@ class CatastrophiaBot(commands.Bot):
             await self.load_extension(cog_path)
 
         await self.tree.sync(guild=discord.Object(id=GUILD_ID))
+        print(f"Setup hook finished.")
 
     async def on_ready(self):
         print(f"{self.user} bot is ready.")
