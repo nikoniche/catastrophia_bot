@@ -1,5 +1,6 @@
 import discord
 from discord import app_commands
+from discord.app_commands import Choice
 from discord.ext import commands
 from discord_bot import CatastrophiaBot
 from methods import embed_message
@@ -53,9 +54,18 @@ class AdminCommands(commands.Cog):
         name="ban",
         description="Permanently bans a user from the discord server."
     )
+    @app_commands.choices(delete_messages=[
+        Choice(name="None", value=0),
+        Choice(name="Last 10 minutes", value=600),
+        Choice(name="Last hour", value=3600),
+        Choice(name="Last 24 hours", value=86400),
+        Choice(name="Last 2 days", value=172800),
+        Choice(name="Last 7 days", value=604800)
+    ])
     async def ban(self,
                   interaction: discord.Interaction,
                   user: discord.User,
+                  delete_messages: Choice[int],
                   reason: str | None = None):
 
         member: discord.Member = interaction.channel.guild.get_member(user.id)
@@ -64,7 +74,7 @@ class AdminCommands(commands.Cog):
             f"Banned permanently {user.display_name} (@{user.name}) for {reason}."
         ), ephemeral=True)
 
-        await member.ban(reason=reason)
+        await member.ban(delete_message_seconds=delete_messages.value, reason=reason)
 
     @app_commands.command(
         name="unban",
@@ -73,27 +83,33 @@ class AdminCommands(commands.Cog):
     async def unban(self,
                     interaction: discord.Interaction,
                     username: str):
+        """Unbans a user with the set username from the discord server."""
 
-        # member: discord.Member = interaction.channel.guild.get_member(user.id)
+        # retrieves guild
         guild = interaction.channel.guild
 
-        banned_users = await guild.bans()
-        unbanned_user: discord.User = None
+        # gets all banned users in the guild
+        banned_users = guild.bans(limit=None)
+        unban_entry: discord.BanEntry | None = None
 
+        # checks for every banned user if his name doesn't equal the requested username
         async for ban_entry in banned_users:
-            user = ban_entry.banned_users
-
-            if user.name == username:
-                unbanned_user = user
+            if ban_entry.user.name == username:
+                unban_entry = ban_entry
                 break
 
-        if unbanned_user is not None:
+        if unban_entry is not None:
+            # found the banned user -> unbanning
+
             await interaction.response.send_message(embed_message(
-                f"Unbanned {unbanned_user.display_name} (@{unbanned_user.name}) - previously banned for."
+                f"Unbanned {unban_entry.user.display_name} (@{unban_entry.user.name})"
+                f" - previously banned for: {unban_entry.reason}"
             ), ephemeral=True)
 
-            await guild.unban(unbanned_user)
+            await guild.unban(unban_entry.user)
         else:
+            # did not find the banned user
+
             await interaction.response.send_message(embed_message(
                 f"There is no user banned with the name '{username}'."
             ))
