@@ -94,11 +94,7 @@ class RobloxConnect(commands.Cog):
         for rblx_name in server_link_requests:
             outdated = False
 
-            if rblx_name not in self.pending_requests:
-                # request exceeded allowed time and has already been cancelled on the bot side
-                outdated = True
-
-            elif server_link_requests[rblx_name] == 1:
+            if server_link_requests[rblx_name] == 1:
                 # request was confirmed
 
                 user: discord.User = local_request["discord_user"]
@@ -125,6 +121,9 @@ class RobloxConnect(commands.Cog):
 
                 del self.pending_requests[local_request]
 
+                outdated = True
+            elif rblx_name not in self.pending_requests:
+                # request exceeded allowed time and has already been cancelled on the bot side
                 outdated = True
 
             if outdated:
