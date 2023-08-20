@@ -2,6 +2,8 @@ import discord
 from discord import app_commands
 from discord.app_commands import Choice
 from discord.ext import commands
+from discord.utils import get
+
 from discord_bot import CatastrophiaBot
 from methods import embed_message
 from settings import get_secret
@@ -112,6 +114,51 @@ class AdminCommands(commands.Cog):
 
             await interaction.response.send_message(embed_message(
                 f"There is no user banned with the name '{username}'."
+            ))
+
+    @app_commands.command(
+        name="mute",
+        description="Permanently mutes a user."
+    )
+    async def mute(self,
+                   interaction: discord.Interaction,
+                   user: discord.User):
+
+        guild = interaction.channel.guild
+        member: discord.Member = guild.get_member(user.id)
+        role = get(guild.roles, name="muted")
+        if member.get_role(role.id) is None:
+            await member.add_roles(role)
+
+            await interaction.response.send_message(embed_message(
+                f"Muted {user.display_name} ({user.name})."
+            ))
+        else:
+            await interaction.response.send_message(embed_message(
+                f"The user {user.display_name} ({user.name}) is already muted."
+            ))
+
+    @app_commands.command(
+        name="unmute",
+        description="Unmutes a user."
+    )
+    async def unmute(self,
+                     interaction: discord.Interaction,
+                     user: discord.User):
+
+        guild = interaction.channel.guild
+        member: discord.Member = guild.get_member(user.id)
+        role = get(guild.roles, name="muted")
+
+        if member.get_role(role.id) is not None:
+            await member.remove_roles(role)
+
+            await interaction.response.send_message(embed_message(
+                f"Unmuted {user.display_name} ({user.name})."
+            ))
+        else:
+            await interaction.response.send_message(embed_message(
+                f"The user {user.display_name} ({user.name}) is not muted."
             ))
 
 
