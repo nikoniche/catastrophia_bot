@@ -128,11 +128,10 @@ class AdminCommands(commands.Cog):
         member: discord.Member = guild.get_member(user.id)
         role = get(guild.roles, name="muted")
         if member.get_role(role.id) is None:
-            await member.add_roles(role)
-
             await interaction.response.send_message(embed_message(
                 f"Muted {user.display_name} ({user.name})."
             ))
+            await member.add_roles(role)
         else:
             await interaction.response.send_message(embed_message(
                 f"The user {user.display_name} ({user.name}) is already muted."
@@ -151,11 +150,10 @@ class AdminCommands(commands.Cog):
         role = get(guild.roles, name="muted")
 
         if member.get_role(role.id) is not None:
-            await member.remove_roles(role)
-
             await interaction.response.send_message(embed_message(
                 f"Unmuted {user.display_name} ({user.name})."
             ))
+            await member.remove_roles(role)
         else:
             await interaction.response.send_message(embed_message(
                 f"The user {user.display_name} ({user.name}) is not muted."
