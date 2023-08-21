@@ -1,58 +1,58 @@
 {
-  "racism": {
-    "punishment": "ban",
-    "exact_match_list": [
-      "negr"
-    ],
-    "any_match_list": [
-      "nigg",
-      "n1gg",
-      "negger",
-      "negroid"
-    ]
-  },
-  "game_promotion": {
-    "punishment": "mute",
-    "exact_match_list": [
-      "lost",
-      "ts",
-      "fallen"
-    ],
-    "any_match_list": [
-      "trident",
-      "rovive"
-    ]
-  },
-  "soft_vulgarism": {
-    "punishment": "mute",
-    "exact_match_list": [
-      "idiot"
-    ],
-    "any_match_list": [
-      "bitch",
-      "dumbass",
-      "butthole",
-      "bastard",
-      "fuck"
-    ]
-  },
-  "hard_vulgarism": {
-    "punishment": "mute",
-    "exact_match_list": [
-      "dick"
-    ],
-    "any_match_list": [
-      "pussy",
-      "pussie",
-      "cock",
-      "retard",
-      "ass",
-      "anal",
-      "anus",
-      "cunt",
-      "kys",
-      "kill yourself",
-      "kill urself"
-    ]
-  }
+    "racism": {
+        "punishment": "ban",
+        "exact_match_list": [
+            "negr"
+        ],
+        "any_match_list": [
+            "nigg",
+            "n1gg",
+            "negger",
+            "negroid"
+        ]
+    },
+    "game_promotion": {
+        "punishment": "mute",
+        "exact_match_list": [
+            "lost",
+            "ts",
+            "fallen"
+        ],
+        "any_match_list": [
+            "trident",
+            "rovive"
+        ]
+    },
+    "mild_vulgarism": {
+        "punishment": "mute",
+        "exact_match_list": [
+            "idiot"
+        ],
+        "any_match_list": [
+            "bitch",
+            "dumbass",
+            "butthole",
+            "bastard",
+            "fuck"
+        ]
+    },
+    "strong_vulgarism": {
+        "punishment": "mute",
+        "exact_match_list": [
+            "dick"
+        ],
+        "any_match_list": [
+            "pussy",
+            "pussie",
+            "cock",
+            "retard",
+            "ass",
+            "anal",
+            "anus",
+            "cunt",
+            "kys",
+            "kill yourself",
+            "kill urself"
+        ]
+    }
 }
