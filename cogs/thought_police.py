@@ -42,6 +42,19 @@ def create_crime_report(user_id: int,
 
 class ThoughtPolice(commands.Cog):
 
+    CRIME_TYPE_CHOICES = [
+        Choice(name="Racism", value="racism"),
+        Choice(name="Game promotion", value="game_promotion"),
+        Choice(name="Mild vulgarism", value="mild_vulgarism"),
+        Choice(name="Strong vulgarism", value="strong_vulgarism")
+    ]
+
+    PUNISHMENT_CHOICES = [
+        Choice(name="Ban", value="ban"),
+        Choice(name="Mute", value="mute"),
+        Choice(name="Warn", value="warn")
+    ]
+
     class OffensiveManager:
 
         OFFENSIVE_LIST_PATH = "offensive_list.json"
@@ -119,6 +132,14 @@ class ThoughtPolice(commands.Cog):
 
             # removed successfully
             return True
+
+        def change_punishment(self, crime_type: str, new_punishment: str) -> None:
+            """Changes the punishment for a set crime type."""
+
+            # should not throw an error as crime_type is a pre-made choice
+            self.raw_list[crime_type]["punishment"] = new_punishment
+            self.save_raw_list_to_file()
+            self.reload_full_lists()
 
     def __init__(self, bot: CatastrophiaBot) -> None:
         self.bot = bot
@@ -198,11 +219,7 @@ class ThoughtPolice(commands.Cog):
         description="Adds a word to the list of offensive words."
     )
     @app_commands.choices(
-        offence_type=[
-            Choice(name="Racism", value="racism"),
-            Choice(name="Game promotion", value="game_promotion"),
-            Choice(name="Mild vulgarism", value="mild_vulgarism"),
-            Choice(name="Strong vulgarism", value="strong_vulgarism")],
+        offence_type=CRIME_TYPE_CHOICES,
         match_type=[
             Choice(name="Exact match", value="exact_match_list"),
             Choice(name="Any match", value="any_match_list")
@@ -255,6 +272,33 @@ class ThoughtPolice(commands.Cog):
             await interaction.response.send_message(embed_message(
                 f"Failed to find the word '{word_to_remove}' in the list."
             ))
+
+    @app_commands.command(
+        name="change_punishment",
+        description="Changes the punishment for a set crime type."
+    )
+    @app_commands.choices(
+        crime_type=CRIME_TYPE_CHOICES,
+        punishment=PUNISHMENT_CHOICES
+    )
+    @app_commands.describe(
+        crime_type="The crime type to set the punishment for.",
+        punishment="New punishment to set for the crime type."
+    )
+    async def change_punishment(self,
+                                interaction: discord.Interaction,
+                                crime_type: Choice[str],
+                                punishment: Choice[str]):
+        """A command that changes the punishment for a set crime type."""
+
+        self.offensive_manager.change_punishment(
+            crime_type.value,
+            punishment.value
+        )
+
+        await interaction.response.send_message(embed_message(
+            f"Changed the punishment for {crime_type.name} to '{punishment.name}'."
+        ))
 
 
 async def setup(bot: CatastrophiaBot) -> None:

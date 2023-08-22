@@ -116,6 +116,7 @@ class AdminCommands(commands.Cog):
                 f"There is no user banned with the name '{username}'."
             ))
 
+
     @app_commands.command(
         name="mute",
         description="Permanently mutes a user."
@@ -136,6 +137,7 @@ class AdminCommands(commands.Cog):
             await interaction.response.send_message(embed_message(
                 f"The user {user.display_name} ({user.name}) is already muted."
             ))
+
 
     @app_commands.command(
         name="unmute",
