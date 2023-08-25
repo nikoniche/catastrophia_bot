@@ -1,3 +1,4 @@
 from discord_bot import CatastrophiaBot
 
-CatastrophiaBot()
+if __name__ == "__main__":
+    CatastrophiaBot()

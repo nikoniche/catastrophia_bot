@@ -16,12 +16,15 @@ CONNECTION_TIMEOUT = get_config("LINK_CHECK_TIMEOUT")
 ATTEMPT_DELAY = get_config("LINK_CHECK_ATTEMPT_DELAY")
 
 CATASTROPHIA_API_URL = get_secret("CATASTROPHIA_API_URL")
+API_KEY_HEADERS = {
+    "api-key": get_secret("API_KEY")
+}
 
 LINK_ENDPOINT = get_config("LINK_ENDPOINT")
 ALL_LINKS_ENDPOINT = get_config("ALL_LINKS_ENDPOINT")
 
 
-def remove_link_from_server(roblox_name: str) -> bool:
+def remove_link_from_server(roblox_name: str) -> None:
     """Sends a post request to the API server to remove a link request from its list.
     Confirmed status 2 means a terminated request, either a timeout or a completed request."""
 
@@ -30,7 +33,7 @@ def remove_link_from_server(roblox_name: str) -> bool:
         requests.post(requested_url, params={
             "username": roblox_name,
             "confirmed": 2
-        })
+        }, headers=API_KEY_HEADERS)
     except requests.exceptions.RequestException:
         return
 
@@ -45,7 +48,7 @@ class RobloxConnect(commands.Cog):
         # made linking requests to check for by the bot
         self.pending_requests = {}
 
-        # initiating a loop to check for every pending requests status to confirm it or timeout it
+        # initiating a loop to check for every pending request's status to confirm it or timeout it
         self.check_loop = self.bot.loop.create_task(self.run_check_link_requests())
 
     async def run_check_link_requests(self):
@@ -66,7 +69,7 @@ class RobloxConnect(commands.Cog):
         # attempts to get the API server requests
         requested_url = CATASTROPHIA_API_URL + ALL_LINKS_ENDPOINT
         try:
-            response = requests.get(requested_url)
+            response = requests.get(requested_url, headers=API_KEY_HEADERS)
         except requests.exceptions.RequestException:
             print(f"Check - Server offline")
             return
@@ -93,9 +96,8 @@ class RobloxConnect(commands.Cog):
                 channel: discord.Interaction.channel = local_request["request_channel"]
                 await channel.send(
                     # f"{user.mention}" + "\n" +
-                    embed_message(
-                    f"Account linking between '{user.name}' and '{roblox_name}' has exceeded the allowed time."
-                ))
+                    embed_message(f"Account linking between "
+                                  f"'{user.name}' and '{roblox_name}' has exceeded the allowed time."))
 
                 # removing it from the client side request list
                 del self.pending_requests[roblox_name]
@@ -125,7 +127,7 @@ class RobloxConnect(commands.Cog):
                 except discord.errors.Forbidden:
                     print("Missing permissions.")
 
-                # informs the user of the successfull linking
+                # informs the user of the successful linking
                 await channel.send(
                     f"{user.mention}" + "\n" +
                     embed_message(
@@ -156,7 +158,7 @@ class RobloxConnect(commands.Cog):
             response = requests.post(requested_url, params={
                 "username": roblox_username,
                 "confirmed": 0
-            })
+            }, headers=API_KEY_HEADERS)
         except requests.exceptions.RequestException as e:
             await error_message(self.bot, "Server offline", e)
             return
@@ -198,7 +200,7 @@ class RobloxConnect(commands.Cog):
             response = requests.post(requested_url, params={
                 "username": roblox_username,
                 "confirmed": confirmation_status
-            })
+            }, headers=API_KEY_HEADERS)
         except requests.exceptions.RequestException as e:
             await error_message(self.bot, "Server offline", e)
             return

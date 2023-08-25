@@ -9,6 +9,9 @@ from methods import embed_message, format_playtime, error_message
 
 GUILD_ID = get_secret("GUILD_ID")
 CATASTROPHIA_API_URL = get_secret("CATASTROPHIA_API_URL")
+API_KEY_HEADERS = {
+    "api-key": get_secret("API_KEY")
+}
 
 REQUEST_ENDPOINT = get_config("REQUEST_ENDPOINT")
 TOP_TIMES_ENDPOINT = get_config("TOP_TIMES_ENDPOINT")
@@ -45,11 +48,7 @@ class PlaytimeCommands(commands.Cog):
         # retrieves the playtime from the Catastrophia API server
         requested_url = CATASTROPHIA_API_URL + REQUEST_ENDPOINT
         try:
-            response = get(
-                requested_url,
-                params={
-                    "username": username
-                })
+            response = get(requested_url, params={"username": username}, headers=API_KEY_HEADERS)
         except requests.exceptions.RequestException as e:
             await error_message(self.bot, "Server offline", e)
             return
@@ -57,7 +56,7 @@ class PlaytimeCommands(commands.Cog):
         try:
             response.raise_for_status()
         except Exception as exception:
-            await error_message(self.bot, "/playtime", exception, response.text)
+            await error_message(self.bot, "/playtime", exception, response_text=response.text)
             return
         else:
             playtime = response.json()
@@ -88,9 +87,7 @@ class PlaytimeCommands(commands.Cog):
 
         try:
             requested_url = CATASTROPHIA_API_URL + TOP_TIMES_ENDPOINT
-            response = requests.get(requested_url, params={
-                "amount": amount
-            })
+            response = requests.get(requested_url, params={"amount": amount}, headers=API_KEY_HEADERS)
         except requests.exceptions.RequestException as e:
             await error_message(self.bot, "Server offline", e)
             return
@@ -99,7 +96,7 @@ class PlaytimeCommands(commands.Cog):
         try:
             response.raise_for_status()
         except Exception as exception:
-            await error_message(self.bot, "/toptimes", exception, response=response.text)
+            await error_message(self.bot, "/toptimes", exception, response_text=response.text)
             return
         else:
             top_times_dict = response.json()
