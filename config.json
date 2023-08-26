@@ -7,6 +7,6 @@
   "LINK_ENDPOINT": "/link",
   "ALL_LINKS_ENDPOINT": "/all_linking_requests",
 
-  "LINK_CHECK_TIMEOUT": 300,
+  "LINK_CHECK_TIMEOUT": 15,
   "LINK_CHECK_ATTEMPT_DELAY": 5
 }

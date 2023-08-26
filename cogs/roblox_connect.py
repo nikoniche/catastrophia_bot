@@ -35,6 +35,7 @@ def remove_link_from_server(roblox_name: str) -> None:
             "confirmed": 2
         }, headers=API_KEY_HEADERS)
     except requests.exceptions.RequestException:
+        print("failed to remove link")
         return
 
 
@@ -83,6 +84,8 @@ class RobloxConnect(commands.Cog):
         else:
             server_link_requests = response.json()
 
+        to_remove_usernames = []
+
         # server clean up and confirmations
         for roblox_name in self.pending_requests:
             # gets the client side request for the set roblox account
@@ -100,7 +103,10 @@ class RobloxConnect(commands.Cog):
                                   f"'{user.name}' and '{roblox_name}' has exceeded the allowed time."))
 
                 # removing it from the client side request list
-                del self.pending_requests[roblox_name]
+                to_remove_usernames.append(roblox_name)
+
+        for to_remove_username in to_remove_usernames:
+            del self.pending_requests[to_remove_username]
 
         # checks for every request from the API server and performs the required operations based on their status
         for roblox_name in server_link_requests:
@@ -108,6 +114,7 @@ class RobloxConnect(commands.Cog):
 
             # request exceeded allowed time and has already been cancelled on the bot side
             if roblox_name not in self.pending_requests:
+                print("name no longer in self pending")
                 outdated = True
 
             # links the discord account to the roblox user if the status is 1
@@ -140,6 +147,7 @@ class RobloxConnect(commands.Cog):
 
             # sending a request to remove the linking request from the API server list
             if outdated:
+                print("sending request to remove")
                 remove_link_from_server(roblox_name)
 
     @app_commands.command(
