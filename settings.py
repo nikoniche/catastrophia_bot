@@ -19,9 +19,9 @@ def get_secret(key: str):
 
 def get_config(key: str):
     with open("config.json", "r") as read:
-        CONFIG = json.load(read)
+        config = json.load(read)
 
-    if key not in CONFIG:
+    if key not in config:
         raise Exception(f"Unknown configuration with the name '{key}'")
 
-    return CONFIG[key]
+    return config[key]

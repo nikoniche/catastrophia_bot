@@ -1,12 +1,16 @@
 {
   "MIN_TOP_PLAYERS": 1,
   "MAX_TOP_PLAYERS": 50,
+
   "CONFIDENTIAL_USERNAMES": ["iloveczechrepublic", "kovarmachane"],
+
   "REQUEST_ENDPOINT": "/request",
   "TOP_TIMES_ENDPOINT": "/toptimes",
   "LINK_ENDPOINT": "/link",
   "ALL_LINKS_ENDPOINT": "/all_linking_requests",
 
-  "LINK_CHECK_TIMEOUT": 15,
-  "LINK_CHECK_ATTEMPT_DELAY": 5
+  "LINK_CHECK_TIMEOUT": 300,
+  "LINK_CHECK_ATTEMPT_DELAY": 5,
+  "BAN_DURATION": 604800,
+  "UNBAN_CHECK_DELAY": 43200
 }
