@@ -12,7 +12,13 @@ def get_secret(key: str):
         if key not in _SECRETS:
             raise Exception(f"Unknown key: '{key}'.")
 
-        return _SECRETS[key]
+        value = _SECRETS[key]
+        try:
+            value = int(value)
+        except ValueError:
+            pass
+
+        return value
     else:
         return os.getenv(key)
 
