@@ -1,7 +1,7 @@
 import json
 import os
 
-ON_REPLIT = False
+ON_REPLIT = True
 
 
 def get_secret(key: str):
@@ -13,14 +13,15 @@ def get_secret(key: str):
             raise Exception(f"Unknown key: '{key}'.")
 
         value = _SECRETS[key]
-        try:
-            value = int(value)
-        except ValueError:
-            pass
-
-        return value
     else:
-        return os.getenv(key)
+        value = os.getenv(key)
+
+    try:
+        value = int(value)
+    except ValueError:
+        pass
+    finally:
+        return value
 
 
 def get_config(key: str):

@@ -96,6 +96,17 @@ optional = false
 python-versions = "!=3.0.*,!=3.1.*,!=3.2.*,!=3.3.*,!=3.4.*,!=3.5.*,!=3.6.*,>=2.7"
 
 [[package]]
+name = "discord"
+version = "2.3.2"
+description = "A mirror package for discord.py. Please install that instead."
+category = "main"
+optional = false
+python-versions = "*"
+
+[package.dependencies]
+"discord.py" = ">=2.3.2"
+
+[[package]]
 name = "discord.py"
 version = "2.3.2"
 description = "A Python wrapper for the Discord API"
@@ -246,7 +257,7 @@ multidict = ">=4.0"
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.10"
-content-hash = "22397d4f306d014735eaa9ee79fe3b248c08f943091b7d115d047f1f12b77a75"
+content-hash = "d15825b484a0688516e64ee2b1d6279fb64c1ff6d6bf62a13dbff31e314b6737"
 
 [metadata.files]
 aiohttp = []
@@ -258,6 +269,7 @@ certifi = []
 charset-normalizer = []
 click = []
 colorama = []
+discord = []
 "discord.py" = []
 flask = []
 frozenlist = []

@@ -1,4 +1,4 @@
-from flask import Flask, request
+from flask import Flask
 from threading import Thread
 
 app = Flask(__name__)
@@ -11,7 +11,7 @@ def home_page():
 
 def run():
     print("Starting keep_alive server.")
-    app.run(host='0.0.0.0', port=8600)
+    app.run(host='0.0.0.0', port=8700)
 
 
 def start_server():
