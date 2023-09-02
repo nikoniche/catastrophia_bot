@@ -8,6 +8,7 @@ from discord.ext import commands
 from discord.utils import get
 from discord_bot import CatastrophiaBot
 from methods import embed_message, error_message
+from discord.errors import HTTPException
 from settings import get_secret, get_config
 
 GUILD_ID = get_secret("GUILD_ID")
@@ -307,15 +308,24 @@ class RobloxConnect(commands.Cog):
             return
         else:
             await member.remove_roles(linked_role)
+
+            # too many request cooldown
+            time.sleep(1)
+
             try:
                 await member.edit(nick=None)
+                # too many request cooldown
+                time.sleep(1)
             except discord.errors.Forbidden:
-                pass
+                print("Forbidden from removing nickname.")
 
-            await interaction.response.send_message(
-                embed_message(
-                    f"Your discord account has been unlinked from the roblox username."
-                ))
+            try:
+                await interaction.response.send_message(
+                    embed_message(
+                        f"Your discord account has been unlinked from the roblox username."
+                    ))
+            except HTTPException:
+                print("RemoveLink - TOO MANY REQUESTS")
 
 
 async def setup(bot: CatastrophiaBot) -> None:
