@@ -11,7 +11,7 @@ def home_page():
 
 def run():
     print("Starting keep_alive server.")
-    app.run(host='0.0.0.0', port=8700)
+    app.run(host='0.0.0.0', port=8080)
 
 
 def start_server():
