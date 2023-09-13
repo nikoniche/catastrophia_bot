@@ -3,7 +3,6 @@ from discord import app_commands
 from discord.app_commands import Choice
 from discord.ext import commands
 from discord.utils import get
-
 from discord_bot import CatastrophiaBot
 from methods import embed_message
 from settings import get_secret
@@ -12,6 +11,7 @@ GUILD_ID = get_secret("GUILD_ID")
 
 
 class AdminCommands(commands.Cog):
+    """Cog containing commands regarding the server administration."""
 
     def __init__(self, bot: CatastrophiaBot) -> None:
         self.bot = bot
@@ -26,6 +26,7 @@ class AdminCommands(commands.Cog):
             user: discord.User,
             channel: discord.TextChannel,
             limit: int = 100) -> None:
+        """Removes a desired amount of messages from a set user."""
 
         # getting x amount of messages from the user
         user_messages = []
@@ -69,6 +70,7 @@ class AdminCommands(commands.Cog):
                   user: discord.User,
                   delete_messages: Choice[int],
                   reason: str | None = None):
+        """Bans a user."""
 
         member: discord.Member = interaction.channel.guild.get_member(user.id)
 
@@ -102,7 +104,6 @@ class AdminCommands(commands.Cog):
 
         if unban_entry is not None:
             # found the banned user -> unbanning
-
             await interaction.response.send_message(embed_message(
                 f"Unbanned {unban_entry.user.display_name} (@{unban_entry.user.name})"
                 f" - previously banned for: {unban_entry.reason}"
@@ -111,11 +112,9 @@ class AdminCommands(commands.Cog):
             await guild.unban(unban_entry.user)
         else:
             # did not find the banned user
-
             await interaction.response.send_message(embed_message(
                 f"There is no user banned with the name '{username}'."
             ))
-
 
     @app_commands.command(
         name="mute",
@@ -124,20 +123,25 @@ class AdminCommands(commands.Cog):
     async def mute(self,
                    interaction: discord.Interaction,
                    user: discord.User):
+        """Mutes a user by giving him a muted role."""
 
+        # fetching the member class and the muted role
         guild = interaction.channel.guild
         member: discord.Member = guild.get_member(user.id)
         role = get(guild.roles, name="muted")
+
         if member.get_role(role.id) is None:
+            # user is not already muted -> give muted role
             await interaction.response.send_message(embed_message(
                 f"Muted {user.display_name} ({user.name})."
             ))
+
             await member.add_roles(role)
         else:
+            # user is already muted
             await interaction.response.send_message(embed_message(
                 f"The user {user.display_name} ({user.name}) is already muted."
             ))
-
 
     @app_commands.command(
         name="unmute",
@@ -146,23 +150,30 @@ class AdminCommands(commands.Cog):
     async def unmute(self,
                      interaction: discord.Interaction,
                      user: discord.User):
+        """Unmutes a user by removing the muted role."""
 
+        # fetching the member class and the muted role
         guild = interaction.channel.guild
         member: discord.Member = guild.get_member(user.id)
         role = get(guild.roles, name="muted")
 
         if member.get_role(role.id) is not None:
+            # user was muted -> removes the role and in doing so unmutes the user
             await interaction.response.send_message(embed_message(
                 f"Unmuted {user.display_name} ({user.name})."
             ))
+
             await member.remove_roles(role)
         else:
+            # user wasn't muted
             await interaction.response.send_message(embed_message(
                 f"The user {user.display_name} ({user.name}) is not muted."
             ))
 
 
 async def setup(bot: CatastrophiaBot) -> None:
+    """Cog setup."""
+
     await bot.add_cog(
         AdminCommands(bot),
         guilds=[discord.Object(id=GUILD_ID)]

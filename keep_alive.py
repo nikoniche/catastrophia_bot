@@ -6,6 +6,8 @@ app = Flask(__name__)
 
 @app.route("/")
 def home_page():
+    """Keep alive's homepage"""
+
     return "Catastrophia Bot - keep_alive.py"
 
 

@@ -9,17 +9,23 @@ GUILD_ID = get_secret("GUILD_ID")
 
 
 class CatastrophiaBot(commands.Bot):
+    """Main bot class for CatastrophiaBot"""
 
     def __init__(self):
+        # bot settings
         super().__init__(
             command_prefix="-",
             intents=discord.Intents.all(),
             application_id=APPLICATION_ID
         )
 
+        # bot start
         self.run(BOT_TOKEN)
 
     async def setup_hook(self):
+        """Performs setup operations necessary before bot start."""
+
+        # formatting and loading all cogs
         for path in os.listdir("cogs"):
             if ".py" not in path:
                 continue
@@ -32,4 +38,6 @@ class CatastrophiaBot(commands.Bot):
         print(f"Setup hook finished.")
 
     async def on_ready(self):
+        """Bot is ready."""
+
         print(f"{self.user} bot is ready.")

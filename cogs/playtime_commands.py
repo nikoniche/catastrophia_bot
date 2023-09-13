@@ -8,21 +8,23 @@ from settings import get_secret, get_config
 from methods import embed_message, format_playtime, error_message
 
 GUILD_ID = get_secret("GUILD_ID")
+
+# constants for requests
 CATASTROPHIA_API_URL = get_secret("CATASTROPHIA_API_URL")
 API_KEY_HEADERS = {
     "api-key": get_secret("API_KEY")
 }
-
 REQUEST_ENDPOINT = get_config("REQUEST_ENDPOINT")
 TOP_TIMES_ENDPOINT = get_config("TOP_TIMES_ENDPOINT")
 
+# command constants
 MIN_TOP_PLAYERS = get_config("MIN_TOP_PLAYERS")
 MAX_TOP_PLAYERS = get_config("MAX_TOP_PLAYERS")
-
 CONFIDENTIAL_USERNAMES = get_config("CONFIDENTIAL_USERNAMES")
 
 
 class PlaytimeCommands(commands.Cog):
+    """Cog containing commands regarding playtime."""
 
     def __init__(self, bot: CatastrophiaBot) -> None:
         self.bot = bot
@@ -35,6 +37,7 @@ class PlaytimeCommands(commands.Cog):
             self,
             interaction: discord.Interaction,
             username: str) -> None:
+        """Shows a playtime for a set player."""
 
         # ignoring difference between uppercase and lowercase letter / names
         username = username.lower()
@@ -53,6 +56,7 @@ class PlaytimeCommands(commands.Cog):
             await error_message(self.bot, "Server offline", e)
             return
 
+        # response check
         try:
             response.raise_for_status()
         except Exception as exception:
@@ -61,13 +65,14 @@ class PlaytimeCommands(commands.Cog):
         else:
             playtime = response.json()
 
+        # formatting playtime and skipping playtimes, that are less than 1 hour
         if playtime < 60:
             message = f"{username} has played less than 1 hour."
         else:
             message = f"{username} has played {format_playtime(playtime)}."
 
+        # responding with the result
         response_message = embed_message(message)
-
         await interaction.response.send_message(response_message)
 
     @app_commands.command(
@@ -77,6 +82,7 @@ class PlaytimeCommands(commands.Cog):
     async def show_top_players(self,
                                interaction: discord.Interaction,
                                amount: int):
+        """Sends a list with a desired amount of top ranking players."""
 
         # setting the limit for the amount argument
         if amount < MIN_TOP_PLAYERS or amount > MAX_TOP_PLAYERS:
@@ -124,6 +130,8 @@ class PlaytimeCommands(commands.Cog):
 
 
 async def setup(bot: CatastrophiaBot) -> None:
+    """Cog setup."""
+
     await bot.add_cog(
         PlaytimeCommands(bot),
         guilds=[discord.Object(id=GUILD_ID)]
