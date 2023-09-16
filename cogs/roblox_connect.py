@@ -58,8 +58,7 @@ class RobloxConnect(commands.Cog):
         self.users_banned_from_linking = []
 
         # initiating a loop to check for every pending request's status to confirm it or timeout it
-        self.check_loop = self.bot.loop.create_task(
-            self.run_check_link_requests())
+        self.check_loop = self.bot.loop.create_task(self.run_check_link_requests())
         self.unban_loop = self.bot.loop.create_task(self.run_check_unbans())
 
     async def run_check_unbans(self):

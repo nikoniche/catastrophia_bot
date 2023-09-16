@@ -8,6 +8,7 @@ from settings import get_secret, get_config
 from methods import embed_message, format_playtime, error_message
 
 GUILD_ID = get_secret("GUILD_ID")
+TOP_PLAYERS_CHANNEL = get_config("TOP_PLAYERS_CHANNEL")
 
 # constants for requests
 CATASTROPHIA_API_URL = get_secret("CATASTROPHIA_API_URL")
@@ -21,6 +22,7 @@ TOP_TIMES_ENDPOINT = get_config("TOP_TIMES_ENDPOINT")
 MIN_TOP_PLAYERS = get_config("MIN_TOP_PLAYERS")
 MAX_TOP_PLAYERS = get_config("MAX_TOP_PLAYERS")
 CONFIDENTIAL_USERNAMES = get_config("CONFIDENTIAL_USERNAMES")
+TOP_PLAYERS_UPDATE_DELAY = get_config("TOP_PLAYERS_UPDATE_DELAY")
 
 
 class PlaytimeCommands(commands.Cog):
@@ -28,6 +30,67 @@ class PlaytimeCommands(commands.Cog):
 
     def __init__(self, bot: CatastrophiaBot) -> None:
         self.bot = bot
+
+        self.toptimes_loop = self.bot.loop.create_task(self.run_toptimes_display())
+
+    async def run_toptimes_display(self):
+        """Checks for users whose linking ban has expired."""
+
+        await self.bot.wait_until_ready()
+
+        while not self.bot.is_closed():
+            await self.print_top_players()
+            await asyncio.sleep(TOP_PLAYERS_UPDATE_DELAY)
+
+    async def print_top_players(self):
+        """Sends a list with a desired amount of top ranking players."""
+        amount = 100
+        channel = self.bot.get_channel(TOP_PLAYERS_CHANNEL)
+
+        await channel.purge(limit=100)
+
+        # setting the limit for the amount argument
+        if amount < MIN_TOP_PLAYERS or amount > MAX_TOP_PLAYERS:
+            await interaction.response.send_message(embed_message(
+                f"The limit for the amount is between {MIN_TOP_PLAYERS} and {MAX_TOP_PLAYERS}."
+            ))
+            return
+
+        try:
+            requested_url = CATASTROPHIA_API_URL + TOP_TIMES_ENDPOINT
+            response = requests.get(requested_url, params={"amount": amount}, headers=API_KEY_HEADERS)
+        except requests.exceptions.RequestException as e:
+            await error_message(self.bot, "Server offline", e)
+            return
+
+        # avoiding HTTP request exceptions
+        try:
+            response.raise_for_status()
+        except Exception as exception:
+            await error_message(self.bot, "/toptimes", exception, response_text=response.text)
+            return
+        else:
+            top_times_dict = response.json()
+            top_times_dict = dict(sorted(top_times_dict.items(), key=lambda item: item[1], reverse=True))
+
+        # formatting the dictionary with the top times into a string message
+        message = ""
+        for i, pair in enumerate(top_times_dict.items()):
+            position = i + 1
+
+            username, playtime = pair
+            message += f"{position}: {username} - {format_playtime(playtime)}\n"
+
+            # dividing message to 10 sections
+            if position % 25 == 0 or position == len(top_times_dict):
+                # removing last line break
+                message = message[:-1]
+
+                # sending a section of the playtimes
+                await channel.send(embed_message(message))
+
+                # reset for the next section
+                message = ""
 
     @app_commands.command(
         name="playtime",
