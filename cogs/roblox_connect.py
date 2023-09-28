@@ -10,6 +10,8 @@ from discord_bot import CatastrophiaBot
 from methods import embed_message, error_message
 from discord.errors import HTTPException
 from settings import get_secret, get_config
+import functools
+import typing
 
 GUILD_ID = get_secret("GUILD_ID")
 
@@ -78,8 +80,14 @@ class RobloxConnect(commands.Cog):
 
         # checking loop
         while not self.bot.is_closed():
-            await self.check_link_requests()
-            await asyncio.sleep(ATTEMPT_DELAY)
+            delay = ATTEMPT_DELAY
+            try:
+                await self.check_link_requests()
+            except:
+                print("Error in linking checks")
+                delay = 20
+            
+            await asyncio.sleep(delay)
 
     async def check_unbans(self):
         """Checks all users that are banned from making linking requests if their ban has not expired yet."""
@@ -102,15 +110,16 @@ class RobloxConnect(commands.Cog):
         requested_url = CATASTROPHIA_API_URL + ALL_LINKS_ENDPOINT
         try:
             response = requests.get(requested_url, headers=API_KEY_HEADERS)
-        except requests.exceptions.RequestException:
-            print(f"Check - Server offline")
+        except Exception as e:
+            # await error_message(self.bot, "ALL LINK GET REQUEST", e)
             return
 
         # checks for invalid requests
         try:
             response.raise_for_status()
         except Exception as exception:
-            print(f"Check - Incorrect request: {exception}")
+            print(f"Check - Incorrect request")
+            # await error_message(self.bot, "ALL LINK response.raise_for_status()", exception, response.content)
             return
         else:
             server_link_requests = response.json()

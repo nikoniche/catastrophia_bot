@@ -27,15 +27,16 @@ async def error_message(bot,
     print(f"Threw: {exception}")
 
     # displays the error message in a channel and pings myself
-    error_channel = bot.get_channel(ERROR_CHANNEL_ID)
+    # error_channel = bot.get_channel(ERROR_CHANNEL_ID)
 
-    # Replace the CATASTROPHIA_API_URL in the exception message
-    filtered_exception = str(exception).replace(CATASTROPHIA_API_URL,
-                                                "").replace(HIDDEN_URL, "")
-
-    # log the error
-    await error_channel.send(
-        "<@" + str(PING_ACCOUNT_ID) + ">" + "\n" +
-        embed_message(f"{own_message}: {filtered_exception}\n"
-                      f"API response: {response_text}"))
-    return
+    # # Replace the CATASTROPHIA_API_URL in the exception message
+    # filtered_exception = str(exception).replace(CATASTROPHIA_API_URL,
+    #                                             "").replace(HIDDEN_URL, "")
+    # if len(filtered_exception) > 3000:
+    #     filtered_exception = filtered_exception[1000:]
+    # # log the error
+    # await error_channel.send(
+    #     "<@" + str(PING_ACCOUNT_ID) + ">" + "\n" +
+    #     embed_message(f"{own_message}: {filtered_exception}\n"
+    #                   f"API response: {response_text}"))
+    # return

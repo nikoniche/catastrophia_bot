@@ -115,7 +115,7 @@ class PlaytimeCommands(commands.Cog):
         requested_url = CATASTROPHIA_API_URL + REQUEST_ENDPOINT
         try:
             response = get(requested_url, params={"username": username}, headers=API_KEY_HEADERS)
-        except requests.exceptions.RequestException as e:
+        except Exception as e:
             await error_message(self.bot, "Server offline", e)
             return
 
@@ -157,7 +157,7 @@ class PlaytimeCommands(commands.Cog):
         try:
             requested_url = CATASTROPHIA_API_URL + TOP_TIMES_ENDPOINT
             response = requests.get(requested_url, params={"amount": amount}, headers=API_KEY_HEADERS)
-        except requests.exceptions.RequestException as e:
+        except Exception as e:
             await error_message(self.bot, "Server offline", e)
             return
 

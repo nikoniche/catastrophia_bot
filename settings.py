@@ -1,10 +1,10 @@
 import json
 import os
 
-ON_REPLIT = False
+ON_REPLIT = True
 
 
-def get_secret(key: str) -> str | int:
+def get_secret(key: str):
     """Returns an environmental variable based on the current platform."""
 
     if not ON_REPLIT:
@@ -30,7 +30,7 @@ def get_secret(key: str) -> str | int:
         return value
 
 
-def get_config(key: str) -> str | int:
+def get_config(key: str):
     """Loads a config value from a json file, they don't have to be private."""
 
     with open("config.json", "r") as read:
