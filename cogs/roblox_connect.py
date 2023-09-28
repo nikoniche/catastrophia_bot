@@ -90,7 +90,7 @@ class RobloxConnect(commands.Cog):
         # attempts to get the API server requests
         requested_url = CATASTROPHIA_API_URL + ALL_LINKS_ENDPOINT
         try:
-            response = requests.get(requested_url, headers=API_KEY_HEADERS)
+            response = requests.get(requested_url, headers=API_KEY_HEADERS, timeout=5)
         except Exception as e:
             # await error_message(self.bot, "ALL LINK GET REQUEST", e)
             return
