@@ -4,7 +4,7 @@ import time
 import discord
 import requests
 from discord import app_commands
-from discord.ext import commands
+from discord.ext import commands, tasks
 from discord.utils import get
 from discord_bot import CatastrophiaBot
 from methods import embed_message, error_message
@@ -59,38 +59,15 @@ class RobloxConnect(commands.Cog):
 
         self.users_banned_from_linking = []
 
-        # initiating a loop to check for every pending request's status to confirm it or timeout it
-        self.check_loop = self.bot.loop.create_task(self.run_check_link_requests())
-        self.unban_loop = self.bot.loop.create_task(self.run_check_unbans())
+        self.check_unbans.start()
+        self.check_link_requests.start()
 
-    async def run_check_unbans(self):
-        """Checks for users whose linking ban has expired."""
-
-        await self.bot.wait_until_ready()
-
-        while not self.bot.is_closed():
-            await self.check_unbans()
-            await asyncio.sleep(UNBAN_CHECK_DELAY)
-
-    async def run_check_link_requests(self):
-        """Creates the loop that indefinitely checks for pending requests API server status."""
-
-        # waiting until bot is ready, because bot can not send messages until ready
-        await self.bot.wait_until_ready()
-
-        # checking loop
-        while not self.bot.is_closed():
-            delay = ATTEMPT_DELAY
-            try:
-                await self.check_link_requests()
-            except:
-                print("Error in linking checks")
-                delay = 20
-            
-            await asyncio.sleep(delay)
-
+    @tasks.loop(hours=12)
     async def check_unbans(self):
         """Checks all users that are banned from making linking requests if their ban has not expired yet."""
+
+        if not self.bot.is_ready():
+            return
 
         to_unban = []
 
@@ -102,9 +79,13 @@ class RobloxConnect(commands.Cog):
         for unban in to_unban:
             self.users_banned_from_linking.remove(unban)
 
+    @tasks.loop(seconds=10)
     async def check_link_requests(self):
         """Asks the API server for its recorded requests, compares them to the client side requests
         and performs operations for each request depending on its status and their age."""
+
+        if not self.bot.is_ready():
+            return
 
         # attempts to get the API server requests
         requested_url = CATASTROPHIA_API_URL + ALL_LINKS_ENDPOINT

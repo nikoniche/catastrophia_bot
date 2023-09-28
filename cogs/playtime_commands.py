@@ -1,8 +1,9 @@
+import asyncio
 import discord
 import requests
 from requests import get
 from discord import app_commands
-from discord.ext import commands
+from discord.ext import commands, tasks
 from discord_bot import CatastrophiaBot
 from settings import get_secret, get_config
 from methods import embed_message, format_playtime, error_message
@@ -31,19 +32,15 @@ class PlaytimeCommands(commands.Cog):
     def __init__(self, bot: CatastrophiaBot) -> None:
         self.bot = bot
 
-        self.toptimes_loop = self.bot.loop.create_task(self.run_toptimes_display())
+        self.print_top_players.start()
 
-    async def run_toptimes_display(self):
-        """Checks for users whose linking ban has expired."""
-
-        await self.bot.wait_until_ready()
-
-        while not self.bot.is_closed():
-            await self.print_top_players()
-            await asyncio.sleep(TOP_PLAYERS_UPDATE_DELAY)
-
+    @tasks.loop(hours=1)
     async def print_top_players(self):
         """Sends a list with a desired amount of top ranking players."""
+
+        if not self.bot.is_ready():
+            return
+
         amount = 100
         channel = self.bot.get_channel(TOP_PLAYERS_CHANNEL)
 
