@@ -1,4 +1,6 @@
 import asyncio
+import json
+
 import discord
 import requests
 import requests
@@ -32,12 +34,17 @@ TOP_50_ROLE_ID = get_config("TOP_50_ROLE_ID")
 TOP_75_ROLE_ID = get_config("TOP_75_ROLE_ID")
 TOP_100_ROLE_ID = get_config("TOP_100_ROLE_ID")
 
+PLAYERS_WITH_TOP_ROLES_PATH = "./players_with_top_roles.json"
+
 
 class PlaytimeCommands(commands.Cog):
     """Cog containing commands regarding playtime."""
 
     def __init__(self, bot: CatastrophiaBot) -> None:
         self.bot = bot
+
+        with open(PLAYERS_WITH_TOP_ROLES_PATH, "r") as read:
+            self.temp_players_with_top_roles = json.load(read)
 
         self.print_top_players.start()
 
@@ -59,10 +66,7 @@ class PlaytimeCommands(commands.Cog):
                 selected_role = 4
 
             if selected_role is not None:
-                for role in top_roles:
-                    member_role = member.get_role(role.id)
-                    if member_role is not None:
-                        await member.remove_roles(role)
+                self.temp_players_with_top_roles.append(discord_id)
                 await member.add_roles(top_roles[selected_role])
 
     @tasks.loop(hours=1)
@@ -113,6 +117,16 @@ class PlaytimeCommands(commands.Cog):
             get(guild.roles, name="Top 100"),
         ]
 
+        for user_id in self.temp_players_with_top_roles:
+            member = guild.get_member(user_id)
+            if member is not None:
+                for role in top_roles:
+                    member_role = member.get_role(role.id)
+                    if member_role is not None:
+                        await member.remove_roles(role)
+
+        self.temp_players_with_top_roles = []
+
         # formatting the dictionary with the top times into a string message
         message = ""
         for i, pair in enumerate(top_times_dict.items()):
@@ -133,6 +147,9 @@ class PlaytimeCommands(commands.Cog):
 
                 # reset for the next section
                 message = ""
+
+        with open(PLAYERS_WITH_TOP_ROLES_PATH, "w") as write:
+            json.dump(self.temp_players_with_top_roles, write, indent=4)
 
     @app_commands.command(
         name="playtime",
