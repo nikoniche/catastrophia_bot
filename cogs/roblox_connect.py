@@ -10,8 +10,6 @@ from discord_bot import CatastrophiaBot
 from methods import embed_message, error_message
 from discord.errors import HTTPException
 from settings import get_secret, get_config
-import functools
-import typing
 
 GUILD_ID = get_secret("GUILD_ID")
 
@@ -150,17 +148,8 @@ class RobloxConnect(commands.Cog):
 
                 if status == 1 or status == 3 or status == 4:
                     if status == 1:
-                        # set the linked role
-                        member: discord.Member = channel.guild.get_member(
-                            user.id)
-                        role = get(member.guild.roles, name="linked")
-                        await member.add_roles(role)
-
-                        # set the nickname as the roblox username
-                        try:
-                            await member.edit(nick=roblox_username)
-                        except discord.errors.Forbidden:
-                            print("Missing permissions.")
+                        # save linking status
+                        self.bot.link_manager.add_user(roblox_username, user.id)
 
                         # informs the user of the successful linking
                         await channel.send(
@@ -197,22 +186,38 @@ class RobloxConnect(commands.Cog):
                 remove_link_from_server(roblox_username)
 
     @app_commands.command(
+        name="realusername",
+        description="If available, shows you the real Roblox username of the selected discord user."
+    )
+    async def realusername(self,
+                           interaction: discord.Interaction,
+                           user: discord.User) -> None:
+
+        name = user.name
+        if user.name != user.display_name:
+            name = f"{user.name} ({user.display_name})"
+
+        if self.bot.link_manager.is_discord_id_linked(user.id):
+            await interaction.response.send_message(embed_message(
+                f"The Roblox username of {name} is {self.bot.link_manager.get_username(user.id)}."
+            ))
+        else:
+            await interaction.response.send_message(embed_message(
+                f"{name} has not linked his Roblox username to his Discord account."
+            ))
+
+    @app_commands.command(
         name="link",
-        description="Initiates the process of linking your discord account to your roblox username."
+        description="Initiates the process of linking your Discord account to your Roblox username."
     )
     async def link(self, interaction: discord.Interaction,
                    roblox_username: str) -> None:
-        """A command that begins linking a discord profile to a roblox username."""
-
-        # fetching the member class and the linked role
-        channel: discord.Interaction.channel = interaction.channel
-        member: discord.Member = channel.guild.get_member(interaction.user.id)
-        linked_role = get(member.guild.roles, name="linked")
+        """A command that begins linking a discord profile to a Roblox username."""
 
         # disallows linking when already linked
-        if member.get_role(linked_role.id) is not None:
+        if self.bot.link_manager.is_discord_id_linked(interaction.user.id):
             await interaction.response.send_message(
-                embed_message(f"You are already linked to a roblox username."))
+                embed_message(f"You are already linked to a Roblox username."))
             return
 
         # checks if there is an active request from the user
@@ -222,7 +227,7 @@ class RobloxConnect(commands.Cog):
                 await interaction.response.send_message(
                     embed_message(
                         f"You have already issued a linking request. "
-                        f"If you misspelled the roblox username, please wait "
+                        f"If you misspelled the Roblox username, please wait "
                         f"{round(CONNECTION_TIMEOUT - (time.time() - local_request['start_time']))} "
                         f"seconds for the request to expire."))
                 return
@@ -261,7 +266,8 @@ class RobloxConnect(commands.Cog):
                                          "discord_name": interaction.user.name,
                                          "status": 0
                                      },
-                                     headers=API_KEY_HEADERS)
+                                     headers=API_KEY_HEADERS,
+                                     timeout=5)
         except requests.exceptions.RequestException as e:
             await error_message(self.bot, "Server offline", e)
             return
@@ -295,44 +301,47 @@ class RobloxConnect(commands.Cog):
 
     @app_commands.command(
         name="removelink",
-        description="Unlinks your discord account from the Roblox username.")
+        description="Unlinks your Discord account from the Roblox username.")
     async def removelink(self,
                          interaction: discord.Interaction) -> None:
-        """A command that removes the linking between discord account and a roblox username."""
+        """A command that removes the linking between Discord account and a roblox username."""
 
         # fetching the member class and the linked role
-        channel: discord.Interaction.channel = interaction.channel
-        member: discord.Member = channel.guild.get_member(interaction.user.id)
-        linked_role = get(member.guild.roles, name="linked")
+        user = interaction.user
 
-        if member.get_role(linked_role.id) is None:
+        if not self.bot.link_manager.is_discord_id_linked(user.id):
             # user isn't linked, but only linked roles have access to the command anyway
             await interaction.response.send_message(
                 embed_message(f"You are not linked to any username."))
             return
         else:
-            # removes the link role
-            await member.remove_roles(linked_role)
+            self.bot.link_manager.remove_user(user.id)
 
             # too many request cooldown
             time.sleep(1)
 
             try:
-                await member.edit(nick=None)
-                # too many request cooldown
-                time.sleep(1)
-            except discord.errors.Forbidden:
-                print("Forbidden from removing nickname.")
-
-            try:
                 # unlink response, for some reason throws a rate limited error
                 await interaction.response.send_message(
                     embed_message(
-                        f"Your discord account has been unlinked from the roblox username."
+                        f"Your Discord account has been unlinked from the Roblox username."
                     ))
             except HTTPException:
                 print("RemoveLink - TOO MANY REQUESTS")
 
+    @app_commands.command(
+        name="forcelink",
+        description="Force links a Discord account to a Roblox username."
+    )
+    async def forcelink(self,
+                        interaction: discord.Interaction,
+                        user: discord.User,
+                        roblox_username: str) -> None:
+
+        self.bot.link_manager.add_user(roblox_username, user.id)
+        await interaction.response.send_message(embed_message(
+            f"Linked {user.name} to {roblox_username}."
+        ), ephemeral=True)
 
 async def setup(bot: CatastrophiaBot) -> None:
     """Cog setup."""

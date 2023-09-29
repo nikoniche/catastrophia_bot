@@ -2,6 +2,7 @@ import os
 import discord
 from discord.ext import commands
 from settings import get_secret
+from link_manager import LinkManager
 
 BOT_TOKEN = get_secret("BOT_TOKEN")
 APPLICATION_ID = get_secret("APPLICATION_ID")
@@ -18,6 +19,9 @@ class CatastrophiaBot(commands.Bot):
             intents=discord.Intents.all(),
             application_id=APPLICATION_ID
         )
+
+
+        self.link_manager = LinkManager()
 
         # bot start
         self.run(BOT_TOKEN)
