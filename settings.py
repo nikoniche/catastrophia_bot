@@ -1,7 +1,7 @@
 import json
 import os
 
-ON_REPLIT = False
+ON_REPLIT = True
 
 
 def get_secret(key: str):
